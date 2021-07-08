@@ -3,13 +3,14 @@ import {
     Card, CardImg, Breadcrumb, BreadcrumbItem, CardText, CardBody,
     CardTitle, Button, Modal, ModalBody, ModalHeader, Row, Col, Label
 } from 'reactstrap';
-import { Link, Route } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Component } from 'react';
 import { Control, LocalForm, Errors } from 'react-redux-form'
-
+import { Loading } from './LoadingComponent';
 const minLength = (len) => (val) => (val) && (val.length >= len)
 const maxLength = (len) => (val) => !(val) || (val.length <= len)
 const required = (val) => val && val.length
+
 class CommentForm extends Component {
     constructor(props) {
         super(props);
@@ -27,8 +28,7 @@ class CommentForm extends Component {
     }
     handleLogin(values) {
         this.toggleModal();
-        console.log("Current State is: " + JSON.stringify(values));
-        alert("Current State is: " + JSON.stringify(values));
+        this.props.addComment(this.props.dishId, values.rating, values.author, values.comment)
     }
 
     render() {
@@ -112,7 +112,7 @@ function RenderDish({ dish }) {
     }
 }
 
-function RenderComment({ dish, comments }) {
+function RenderComment({ dishId, comments, addComment }) {
     if (comments != null) {
         const comm = comments.map(comment => {
             return (
@@ -134,7 +134,7 @@ function RenderComment({ dish, comments }) {
                 <ul className='list-unstyled'>
                     {comm}
                 </ul>
-                <CommentForm dish={dish} comments={comments}></CommentForm>
+                <CommentForm comments={comments} dishId={dishId} addComment={addComment}></CommentForm>
             </div>
         )
     } else {
@@ -143,10 +143,28 @@ function RenderComment({ dish, comments }) {
 }
 
 const DishDetails = (props) => {
-
-    if (props.dish == null) {
-        return (<div></div>);
+    if (props.isLoading) {
+        return (
+            <div className="container">
+                <div className="row">
+                    <Loading />
+                </div>
+            </div>
+        )
     }
+    else if (props.errMess) {
+        return (
+            <div className="container">
+                <div className="row">
+                    <h4>{props.errMess}</h4>
+                </div>
+            </div>
+        )
+    }
+    else
+        if (props.dish == null) {
+            return (<div></div>);
+        }
     return (
         <div className="container">
             <div className='row'>
@@ -155,6 +173,7 @@ const DishDetails = (props) => {
                     <BreadcrumbItem>
                         <Link to='/menu'>Menu</Link>
                     </BreadcrumbItem>
+
                     <BreadcrumbItem active>{props.dish.name}</BreadcrumbItem>
                 </Breadcrumb>
                 <div className="col-12">
@@ -166,7 +185,9 @@ const DishDetails = (props) => {
                 <div className="col-12 col-md-5 m-1">
                     <RenderDish dish={props.dish}></RenderDish>
                 </div>
-                <RenderComment comments={props.comments}></RenderComment>
+                <RenderComment comments={props.comments}
+                    addComment={props.addComment}
+                    dishId={props.dish.id}></RenderComment>
 
             </div>
         </div>
